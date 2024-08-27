@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="c3f924da-b9bb-40fe-bb5e-a863680d5778" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../assembly/kar/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../assembly/kar/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../assembly/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../assembly/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../karaf-features/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../karaf-features/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../karaf-features/src/main/resources/features.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../karaf-features/src/main/resources/features.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../plugin/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../plugin/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../plugin/src/main/java/org/opennms/timeseries/impl/timescale/TimescaleStorage.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../plugin/src/main/java/org/opennms/timeseries/impl/timescale/util/DBUtils.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../plugin/src/main/java/org/opennms/timeseries/impl/timescale/util/TableNames.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../plugin/src/main/java/org/opennms/timeseries/impl/timescale/util/TimescaleDatabaseInitializer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../plugin/src/main/resources/OSGI-INF/blueprint/blueprint.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../plugin/src/main/resources/OSGI-INF/blueprint/blueprint.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../plugin/src/test/java/org/opennms/timeseries/impl/timescale/TimescaleStorageTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../plugin/src/test/java/org/opennms/timeseries/impl/timescale/util/DatabaseInitializerTest.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../pom.xml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 1
+}]]></component>
+  <component name="ProjectId" id="2lCtEq20Z2nlMvPxNQ4UXLxoxil" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "onboarding.tips.debug.path": "/home/dino2gnt/src/timeseries-integration-pgtimeseries/src/Main.java"
+  }
+}]]></component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c3f924da-b9bb-40fe-bb5e-a863680d5778" name="Changes" comment="" />
+      <created>1724695777252</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1724695777252</updated>
+    </task>
+    <servers />
+  </component>
+</project>
