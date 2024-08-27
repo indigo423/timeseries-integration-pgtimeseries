@@ -29,7 +29,7 @@ public class PGTimeseriesDatabaseInitializer {
             Statement stmt = conn.createStatement();
             db.watch(stmt);
 
-            ResultSet result = stmt.executeQuery("select count(*) from pg_extension where extname = 'timeseries';");
+            ResultSet result = stmt.executeQuery("select count(*) from pg_extension where extname = 'timeseries'");
             db.watch(result);
             result.next();
             return result.getInt(1) > 0;
@@ -88,6 +88,19 @@ public class PGTimeseriesDatabaseInitializer {
         }
     }
 
+    void installExtension() throws SQLException {
+        DBUtils db = new DBUtils();
+        try {
+            Connection conn = dataSource.getConnection();
+            db.watch(conn);
+            Statement stmt = conn.createStatement();
+            db.watch(stmt);
+            executeQuery(stmt, "CREATE EXTENSION timeseries CASCADE");
+        } finally {
+            db.cleanUp();
+        }
+    }
+
     private void executeQuery(Statement stmt, final String sql) throws SQLException {
         log.info(sql);
         stmt.execute(sql);
@@ -97,7 +110,8 @@ public class PGTimeseriesDatabaseInitializer {
 
         // Check Plugin
         if (!isPGTimeseriesExtensionInstalled()) {
-            log.error("It looks like pg_timeseries extension is not installed. Please install: pg_timeseries_docs_url Aborting.");
+            log.info("It looks like pg_timeseries extension is not installed. Please install: pg_timeseries_docs_url Aborting.");
+            installExtension();
             return;
         }
 
