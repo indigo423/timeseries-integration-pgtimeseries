@@ -29,7 +29,7 @@ public class PGTimeseriesDatabaseInitializer {
             Statement stmt = conn.createStatement();
             db.watch(stmt);
 
-            ResultSet result = stmt.executeQuery("select count(*) from pg_extension where extname = 'pg_timeseries';");
+            ResultSet result = stmt.executeQuery("select count(*) from pg_extension where extname = 'timeseries';");
             db.watch(result);
             result.next();
             return result.getInt(1) > 0;
