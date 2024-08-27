@@ -15,12 +15,13 @@
         <karaf.version>4.3.10</karaf.version>
         <log4j.version>2.23.1</log4j.version>
         <mockito.version>5.11.0</mockito.version>
-        <opennms.api.version>0.6.0</opennms.api.version>
+        <opennms.api.version>1.0.0</opennms.api.version>
         <osgi.version>6.0.0</osgi.version>
         <osgi.compendium.version>5.0.0</osgi.compendium.version>
         <osgi.enterprise.version>5.0.0</osgi.enterprise.version>
         <postgres.version>42.2.25</postgres.version>
         <slf4j-api.version>1.7.36</slf4j-api.version>
+	<istack.commons.version>3.0.12</istack.commons.version>
     </properties>
 
     <version>0.1.0</version>
@@ -61,6 +62,11 @@
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
                 <version>${postgres.version}</version>
+            </dependency>
+	    <dependency> 
+                <groupId>com.sun.istack</groupId>
+                <artifactId>istack-commons-runtime</artifactId>
+                <version>${istack.commons.version}</version>
             </dependency>
             <dependency><!-- only needed during compile time -->
                 <groupId>org.projectlombok</groupId>
