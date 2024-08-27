@@ -110,7 +110,7 @@ public class PGTimeseriesDatabaseInitializer {
 
         // Check Plugin
         if (!isPGTimeseriesExtensionInstalled()) {
-            log.info("It looks like pg_timeseries extension is not installed. Please install: pg_timeseries_docs_url Aborting.");
+            log.info("It looks like pg_timeseries extension is not installed. Attempting to install the extension....");
             installExtension();
             return;
         }
