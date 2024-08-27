@@ -18,7 +18,10 @@ It can be used in OpenNMS to store and retrieve timeseries data.
 * In opennms deploy root folder: ``echo "org.opennms.timeseries.strategy=integration" >> etc/opennms.properties.d/timescale.properties``
 ### Compile from source
 * compile: ``mvn install``
-* copy the `timeseries-pgtimeseries-plugin.kar` from the `./assembly/kar/target` folder to `$OPENNMS_HOME/deploy`
+* copy the `opennms-plugins-timeseries-pgtimeseries-plugin.kar` from the `./assembly/kar/target` folder to `$OPENNMS_HOME/deploy`
+### Add config for `pg_cron`
+* `echo "cron.database_name = 'opennms' >> /var/lib/pgsql/data/postgresql.conf`
+* `echo "shared_preload_libraries = 'pg_cron'" >> /var/lib/pgsql/data/postgresql.conf`
 ###
 ### Activate in the Karaf shell:
   * ``ssh -p 8101 admin@localhost``

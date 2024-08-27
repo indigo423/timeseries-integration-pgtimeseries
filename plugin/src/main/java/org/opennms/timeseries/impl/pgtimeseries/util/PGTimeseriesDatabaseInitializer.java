@@ -72,7 +72,7 @@ public class PGTimeseriesDatabaseInitializer {
             executeQuery(stmt, "SELECT enable_ts_table('pgtimeseries_time_series', partition_duration := '1 week')");
             // set total retention for 1 year
             // TODO make this duration configurable
-            executeQuery(stmt, "SELECT set_ts_retention_policy('pgtimeseries_time_series', '1 year'");
+            executeQuery(stmt, "SELECT set_ts_retention_policy('pgtimeseries_time_series', '1 year')");
             // enable compression after 3 months
             // TODO make this duration configurable too
             executeQuery(stmt, "SELECT set_ts_compression_policy('pgtimeseries_time_series', '3 months')");
@@ -102,7 +102,7 @@ public class PGTimeseriesDatabaseInitializer {
     }
 
     private void executeQuery(Statement stmt, final String sql) throws SQLException {
-        log.info(sql);
+        log.debug(sql);
         stmt.execute(sql);
     }
 
@@ -112,7 +112,6 @@ public class PGTimeseriesDatabaseInitializer {
         if (!isPGTimeseriesExtensionInstalled()) {
             log.info("It looks like pg_timeseries extension is not installed. Attempting to install the extension....");
             installExtension();
-            return;
         }
 
         // Check and create tables
