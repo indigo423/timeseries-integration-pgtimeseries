@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 import javax.sql.DataSource;
 
 import org.opennms.integration.api.v1.timeseries.Aggregation;
+import org.opennms.integration.api.v1.timeseries.MetaTagNames;
 import org.opennms.integration.api.v1.timeseries.Metric;
 import org.opennms.integration.api.v1.timeseries.Sample;
 import org.opennms.integration.api.v1.timeseries.StorageException;
@@ -264,10 +265,32 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             String sql;
             Timestamp start = new java.sql.Timestamp(request.getStart().toEpochMilli());
             Timestamp end = new java.sql.Timestamp(request.getEnd().toEpochMilli());
-            if (Aggregation.NONE == request.getAggregation()) {
-                sql = String.format("SELECT time AS step, value as aggregation FROM pgtimeseries_time_series where key=? AND time > %s AND time < %s ORDER BY step ASC", end, start);
+            String type = metric.getFirstTagByKey(MetaTagNames.mtype).getValue();
+            if(Metric.Mtype.count.name().equals(type) || Metric.Mtype.counter.name().equals(type)) {
+                // This is a counter
+                if (Aggregation.NONE == request.getAggregation()) {
+                    //this Common Table Expression computes the delta between measurements and sums over the interval period, e.g. a counter with no aggregation
+                    sql = String.format("with raw_values as " +
+                            "( select time AS step, value - LAG(value) OVER (ORDER BY time) " +
+                            "as deltaval FROM pgtimeseries_time_series where key=? AND time > %s AND time < %s ORDER BY step ASC ) " +
+                            "select step, sum(deltaval) as aggregation from raw_values GROUP BY step ORDER BY step", end, start);
+                } else {
+                    //this Common Table Expression computes the delta between measurements and performs an aggregation function on the
+                    // time-grouped deltas e.g. an aggregated counter
+                    sql = String.format("with raw_values as " +
+                            "( select time AS step, value - LAG(value) OVER (ORDER BY time) " +
+                            "as deltaval FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', '[%s, %s]') where key=?) " +
+                            "select step, %s(deltaval) as aggregation from raw_values GROUP BY step ORDER BY step",
+                            stepInSeconds, start, end, toSql(request.getAggregation()));
+                }
             } else {
-                sql = String.format("SELECT time AS step, %s(value) as aggregation FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', '[%s, %s]') where key=? GROUP BY step", toSql(request.getAggregation()), stepInSeconds, start, end);
+                if (Aggregation.NONE == request.getAggregation()) {
+                    sql = String.format("SELECT time AS step, value as aggregation FROM pgtimeseries_time_series where key=? AND time > %s AND time < %s ORDER BY step ASC", end, start);
+                } else {
+                    sql = String.format("SELECT time AS step, %s(value) as aggregation" +
+                            " FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', '[%s, %s]') " +
+                            "where key=? GROUP BY step", toSql(request.getAggregation()), stepInSeconds, start, end);
+                }
             }
             PreparedStatement statement = connection.prepareStatement(sql);
             db.watch(statement);
