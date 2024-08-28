@@ -267,12 +267,12 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             if (Aggregation.NONE == request.getAggregation()) {
                 sql = String.format("SELECT time AS step, value as aggregation FROM pgtimeseries_time_series where key=? AND time > %s AND time < %s ORDER BY step ASC", end, start);
             } else {
-                sql = String.format("SELECT time AS step, value as aggregation FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', ?) where key=?", stepInSeconds);
+                sql = String.format("SELECT time AS step, %s(value) as aggregation FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', '[%s, %s]') where key=? GROUP BY step", toSql(request.getAggregation()), stepInSeconds, start, end);
             }
             PreparedStatement statement = connection.prepareStatement(sql);
             db.watch(statement);
 
-            statement.setString(2, request.getMetric().getKey());
+            statement.setString(1, request.getMetric().getKey());
             ResultSet rs = statement.executeQuery();
             db.watch(rs);
             samples = new ArrayList<>();
