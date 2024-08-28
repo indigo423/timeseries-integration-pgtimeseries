@@ -262,19 +262,17 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             Metric metric = metrics.get(0);
 
             String sql;
+            Timestamp start = new java.sql.Timestamp(request.getStart().toEpochMilli());
+            Timestamp end = new java.sql.Timestamp(request.getEnd().toEpochMilli());
             if (Aggregation.NONE == request.getAggregation()) {
-                sql = "SELECT time AS step, value as aggregation FROM pgtimeseries_time_series where key=? AND time > ? AND time < ? ORDER BY step ASC";
-
+                sql = String.format("SELECT time AS step, value as aggregation FROM pgtimeseries_time_series where key=? AND time > %s AND time < %s ORDER BY step ASC", end, start);
             } else {
-                sql = String.format("SELECT time_bucket_gapfill('%s Seconds', time) AS step, "
-                        + "%s(value) as aggregation, avg(value), max(value) FROM pgtimeseries_time_series where "
-                        + "key=? AND time > ? AND time < ? GROUP BY step ORDER BY step ASC", stepInSeconds, toSql(request.getAggregation()));
+                sql = String.format("SELECT time AS step, value as aggregation FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', ?) where key=?", stepInSeconds);
             }
             PreparedStatement statement = connection.prepareStatement(sql);
             db.watch(statement);
-            statement.setString(1, request.getMetric().getKey());
-            statement.setTimestamp(2, new java.sql.Timestamp(request.getStart().toEpochMilli()));
-            statement.setTimestamp(3, new java.sql.Timestamp(request.getEnd().toEpochMilli()));
+
+            statement.setString(2, request.getMetric().getKey());
             ResultSet rs = statement.executeQuery();
             db.watch(rs);
             samples = new ArrayList<>();
