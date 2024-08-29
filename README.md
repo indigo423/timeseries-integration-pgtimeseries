@@ -31,3 +31,10 @@ It can be used in OpenNMS to store and retrieve timeseries data.
 ## Links:
 * Introduction to the Time Series Storage Layer: https://docs.opennms.com/horizon/latest/operation/operation/timeseries/introduction.html
 * pg_timeseries: https://github.com/tembo-io/pg_timeseries
+
+## Roadmap / To do:
+* Make the datasources configurable to allow timeseries to be persisted to an external database
+* Use the `opennms-admin` datasource to install the extensions and create the tables if possible
+* Make all other options configurable at install (retention, compression, partition interval, etc) and at runtime via Karaf shell commands where possible
+* Add Karaf shell commands to expose [ts_table_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_table_info) and [ts_part_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_part_info)
+* More as I think of it
