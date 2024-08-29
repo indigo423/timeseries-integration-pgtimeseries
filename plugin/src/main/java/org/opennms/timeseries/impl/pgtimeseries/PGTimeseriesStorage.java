@@ -70,10 +70,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PGTimeseriesStorage implements TimeSeriesStorage {
 
-    private static final Logger RATE_LIMITED_LOGGER = log; // TODO Patrick: add RateLimitedLog?
+    private static final Logger RATE_LIMITED_LOGGER = log;
 
+    //TODO - make this configurable
     private final DataSource dataSource;
 
+    //TODO - make this configurable
     private int maxBatchSize = 100;
 
     @Override
@@ -273,15 +275,15 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
                     sql = String.format("with raw_values as " +
                             "( select time AS step, value - LAG(value) OVER (ORDER BY time) " +
                             "as deltaval FROM pgtimeseries_time_series where key=? AND time > %s AND time < %s ORDER BY step ASC ) " +
-                            "select step, sum(deltaval) as aggregation from raw_values GROUP BY step ORDER BY step", end, start);
+                            "select step, (sum(deltaval) / %s) as aggregation from raw_values GROUP BY step ORDER BY step", end, start, stepInSeconds);
                 } else {
                     //this Common Table Expression computes the delta between measurements and performs an aggregation function on the
                     // time-grouped deltas e.g. an aggregated counter
                     sql = String.format("with raw_values as " +
                             "( select time AS step, value - LAG(value) OVER (ORDER BY time) " +
                             "as deltaval FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', '[%s, %s]') where key=?) " +
-                            "select step, %s(deltaval) as aggregation from raw_values GROUP BY step ORDER BY step",
-                            stepInSeconds, start, end, toSql(request.getAggregation()));
+                            "select step, (%s(deltaval) / %s) as aggregation from raw_values GROUP BY step ORDER BY step",
+                            stepInSeconds, start, end, toSql(request.getAggregation()), stepInSeconds);
                 }
             } else {
                 if (Aggregation.NONE == request.getAggregation()) {
