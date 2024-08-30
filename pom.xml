@@ -21,7 +21,8 @@
         <osgi.enterprise.version>5.0.0</osgi.enterprise.version>
         <postgres.version>42.2.25</postgres.version>
         <slf4j-api.version>1.7.36</slf4j-api.version>
-	<istack.commons.version>3.0.12</istack.commons.version>
+	    <istack.commons.version>3.0.12</istack.commons.version>
+        <metrics.version>4.2.25</metrics.version>
     </properties>
 
     <version>0.1.0</version>
@@ -63,10 +64,20 @@
                 <artifactId>postgresql</artifactId>
                 <version>${postgres.version}</version>
             </dependency>
-	    <dependency> 
+	        <dependency>
                 <groupId>com.sun.istack</groupId>
                 <artifactId>istack-commons-runtime</artifactId>
                 <version>${istack.commons.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+                <version>${metrics.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-jmx</artifactId>
+                <version>${metrics.version}</version>
             </dependency>
             <dependency><!-- only needed during compile time -->
                 <groupId>org.projectlombok</groupId>

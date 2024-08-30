@@ -61,6 +61,9 @@ import org.opennms.timeseries.impl.pgtimeseries.util.DBUtils;
 import org.opennms.timeseries.impl.pgtimeseries.util.PGTimeseriesDatabaseInitializer;
 import org.slf4j.Logger;
 
+import com.codahale.metrics.jmx.JmxReporter;
+import com.codahale.metrics.Meter;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Lists;
 
 import lombok.RequiredArgsConstructor;
@@ -78,11 +81,18 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
     //TODO - make this configurable
     private int maxBatchSize = 100;
 
+    private final MetricRegistry metrics = new MetricRegistry();
+    private final Meter samplesWritten = metrics.meter("samplesWritten");
+    private final Meter samplesRead = metrics.meter("samplesRead");
+    private final Meter samplesLost = metrics.meter("samplesLost");
+    final JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain("org.opennms.timeseries.impl.pgtimeseries").build();
+
     @Override
     public void store(List<Sample> entries) throws StorageException {
         String sql = "INSERT INTO pgtimeseries_time_series(time, key, value)  values (?, ?, ?)";
 
         final DBUtils db = new DBUtils(this.getClass());
+        Integer batchSize = 0;
         try {
             Connection connection = this.dataSource.getConnection();
             db.watch(connection);
@@ -101,7 +111,9 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
                     storeTags(sample.getMetric(), ImmutableMetric.TagType.meta, sample.getMetric().getMetaTags());
                     storeTags(sample.getMetric(), ImmutableMetric.TagType.external, sample.getMetric().getExternalTags());
                 }
+                batchSize = batch.size();
                 ps.executeBatch();
+                samplesWritten.mark(batchSize);
 
                 if (log.isDebugEnabled()) {
                     String keys = batch.stream()
@@ -113,6 +125,7 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             }
         } catch (SQLException e) {
             RATE_LIMITED_LOGGER.error("An error occurred while inserting samples. Some sample may be lost.", e);
+            samplesLost.mark(batchSize);
             throw new StorageException(e);
         } finally {
             db.cleanUp();
@@ -268,7 +281,7 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             Timestamp start = new java.sql.Timestamp(request.getStart().toEpochMilli());
             Timestamp end = new java.sql.Timestamp(request.getEnd().toEpochMilli());
             String type = metric.getFirstTagByKey(MetaTagNames.mtype).getValue();
-            if(Metric.Mtype.count.name().equals(type) || Metric.Mtype.counter.name().equals(type)) {
+            if (Metric.Mtype.count.name().equals(type) || Metric.Mtype.counter.name().equals(type)) {
                 // This is a counter
                 if (Aggregation.NONE == request.getAggregation()) {
                     //this Common Table Expression computes the delta between measurements and sums over the interval period, e.g. a counter with no aggregation
@@ -301,9 +314,14 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             ResultSet rs = statement.executeQuery();
             db.watch(rs);
             samples = new ArrayList<>();
+            if (Metric.Mtype.count.name().equals(type) || Metric.Mtype.counter.name().equals(type)) {
+                rs.next();
+                log.debug("Counter: skipping first result as it is always null: '{}'", rs.getDouble("aggregation"));
+            }
             while (rs.next()) {
                 long timestamp = rs.getTimestamp("step").getTime();
                 samples.add(ImmutableSample.builder().metric(metric).time(Instant.ofEpochMilli(timestamp)).value(rs.getDouble("aggregation")).build());
+                samplesRead.mark();
             }
         } catch (SQLException e) {
             log.error("Could not retrieve FetchResults", e);
@@ -366,5 +384,10 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
         } catch (final SQLException e) {
             throw new StorageException(e);
         }
+        reporter.start();
+    }
+
+    public void destroy() {
+        reporter.stop();
     }
 }
