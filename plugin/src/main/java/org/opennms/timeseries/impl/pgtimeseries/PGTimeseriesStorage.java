@@ -390,4 +390,8 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
     public void destroy() {
         reporter.stop();
     }
+
+    public MetricRegistry getMetrics() {
+        return metrics;
+    }
 }

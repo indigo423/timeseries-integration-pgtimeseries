@@ -11,12 +11,13 @@
 ">
 
     <reference id="dataSource" interface="javax.sql.DataSource" availability="mandatory" />
-    <bean id="timeSeriesStoragePGTimeseries"
+    <bean id="timeSeriesStorage"
           class="org.opennms.timeseries.impl.pgtimeseries.PGTimeseriesStorage"
           init-method="init">
         <argument ref="dataSource" />
     </bean>
-    <service ref="timeSeriesStoragePGTimeseries" interface="org.opennms.integration.api.v1.timeseries.TimeSeriesStorage">
+    <service ref="timeSeriesStorage" interface="org.opennms.timeseries.impl.pgtimeseries.PGTimeseriesStorage"/>
+    <service ref="timeSeriesStorage" interface="org.opennms.integration.api.v1.timeseries.TimeSeriesStorage">
         <service-properties>
             <entry key="registration.export" value="true" />
         </service-properties>
