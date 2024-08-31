@@ -1,7 +1,6 @@
 
 package org.opennms.timeseries.impl.pgtimeseries.shell;
 
-
 import java.util.concurrent.TimeUnit;
 
 import org.apache.karaf.shell.api.action.Action;
@@ -12,7 +11,8 @@ import org.opennms.timeseries.impl.pgtimeseries.PGTimeseriesStorage;
 
 import com.codahale.metrics.ConsoleReporter;
 
-@Command(scope = "opennms-pgtimeseries", name = "stats", description = "Display statistics from the pg_timeseries plugin.")
+
+@Command(scope = "opennms-pgtimeseries", name = "stats", description = "Display metrics from the pg_timeseries plugin.")
 @Service
 public class Stats implements Action {
 
