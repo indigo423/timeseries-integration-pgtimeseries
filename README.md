@@ -14,6 +14,9 @@ It can be used in OpenNMS to store and retrieve timeseries data.
 
 
 ## Usage
+### Grant the 'opennms' role superuser on the opennms database
+* `sudo su - postgres -c "alter role opennms superuser"`
+* This is currently required for the plugin to install extensions and create the required tables. This can be removed later.
 ### enable the Time Series Storage layer
 * In opennms deploy root folder: ``echo "org.opennms.timeseries.strategy=integration" >> etc/opennms.properties.d/timescale.properties``
 ### Compile from source
