@@ -254,30 +254,119 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             Timestamp start = new java.sql.Timestamp(request.getStart().toEpochMilli());
             Timestamp end = new java.sql.Timestamp(request.getEnd().toEpochMilli());
             String type = metric.getFirstTagByKey(MetaTagNames.mtype).getValue();
+            String aggr;
             if (Metric.Mtype.count.name().equals(type) || Metric.Mtype.counter.name().equals(type)) {
                 // This is a counter
                 if (Aggregation.NONE == request.getAggregation()) {
-                    //this Common Table Expression computes the delta between measurements and sums over the interval period, e.g. a counter with no aggregation
-                    sql = String.format("with raw_values as " +
-                            "( select time AS step, value - LAG(value) OVER (ORDER BY time) " +
-                            "as deltaval FROM pgtimeseries_time_series where (key=? OR key is null) AND time > %s AND time < %s ORDER BY step ASC ) " +
-                            "select step, COALESCE((sum(deltaval) / %s),'NaN') as aggregation from raw_values GROUP BY step ORDER BY step", end, start, stepInSeconds);
+                    aggr = "sum";
                 } else {
-                    //this Common Table Expression computes the delta between measurements and performs an aggregation function on the
-                    // time-grouped deltas e.g. an aggregated counter
-                    sql = String.format("with raw_values as " +
-                            "( select time AS step, value - LAG(value) OVER (ORDER BY time) " +
-                            "as deltaval FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', '[%s, %s]') where (key=? OR key is null)) " +
-                            "select step, COALESCE((%s(deltaval) / %s), 'NaN') as aggregation from raw_values GROUP BY step ORDER BY step",
-                            stepInSeconds, start, end, toSql(request.getAggregation()), stepInSeconds);
+                    aggr = toSql(request.getAggregation());
                 }
-            } else {
+                sql = String.format("WITH intervals AS ( " +
+                "SELECT " +
+                    "n AS start_time, " +
+                    "n + '%s seconds'::pg_catalog.interval AS end_time " +
+                "FROM " +
+                    "generate_series( '%s', '%s', '%s seconds'::pg_catalog.interval ) AS n " +
+            "), raw_values AS ( " +
+                "SELECT " +
+                    "time AS step, " +
+                    "value - lag( value ) OVER ( ORDER BY time ) AS deltaval " +
+                "FROM " +
+                    "pgtimeseries_time_series " +
+                "WHERE " +
+                    "key = ? AND " +
+                    "time > '%s' AND " +
+                    "time < '%s' " +
+                "ORDER BY " +
+                    "step ASC " +
+            ") " +
+            "SELECT " +
+                "f.start_time AS step, " +
+                "COALESCE( " +
+                    "%s( deltaval ) / %s, " +
+                    "'NaN' " +
+                ") as aggregation " +
+            "FROM " +
+                "raw_values AS r " +
+                "RIGHT JOIN intervals AS f ON r.step >= f.start_time AND " +
+                "r.step < f.end_time " +
+            "GROUP BY " +
+                "f.start_time, " +
+                "f.end_time " +
+            "ORDER BY " +
+                "f.start_time", stepInSeconds, start, end, stepInSeconds, start, end, aggr, stepInSeconds);
+            } else { // Not a counter!
                 if (Aggregation.NONE == request.getAggregation()) {
-                    sql = String.format("SELECT time AS step, COALESCE(value, 'NaN') as aggregation FROM pgtimeseries_time_series where (key=? OR key is null) AND time > %s AND time < %s ORDER BY step ASC", end, start);
+                    sql = String.format("WITH intervals AS ( " +
+                    "SELECT " +
+                        "n AS start_time, " +
+                        "n + '%s seconds'::pg_catalog.interval AS end_time " +
+                    "FROM " +
+                        "generate_series( '%s', '%s', '%s seconds'::pg_catalog.interval ) AS n " +
+                "), raw_values AS ( " +
+                    "SELECT " +
+                        "time AS step, " +
+                        "value AS raw_value " +
+                    "FROM " +
+                        "pgtimeseries_time_series " +
+                    "WHERE " +
+                        "key = ? AND " +
+                        "time > '%s' AND " +
+                        "time < '%s' " +
+                    "ORDER BY " +
+                        "step ASC " +
+                ") " +
+                "SELECT " +
+                    "f.start_time AS step, " +
+                    "COALESCE( " +
+                        "raw_value, " +
+                        "'NaN' " +
+                    ") as aggregation " +
+                "FROM " +
+                    "raw_values AS r " +
+                    "RIGHT JOIN intervals AS f ON r.step >= f.start_time AND " +
+                    "r.step < f.end_time " +
+                "GROUP BY " +
+                    "f.start_time, " +
+                    "f.end_time " +
+                "ORDER BY " +
+                    "f.start_time", stepInSeconds, start, end, stepInSeconds, start, end);
                 } else {
-                    sql = String.format("SELECT time AS step, COALESCE(%s(value), 'NaN') as aggregation" +
-                            " FROM date_bin_table(NULL::pgtimeseries_time_series, '%s Seconds', '[%s, %s]') " +
-                            "where (key=? OR key is null) GROUP BY step ORDER BY step", toSql(request.getAggregation()), stepInSeconds, start, end);
+                    sql = String.format("WITH intervals AS ( " +
+                    "SELECT " +
+                        "n AS start_time, " +
+                        "n + '%s seconds'::pg_catalog.interval AS end_time " +
+                    "FROM " +
+                        "generate_series( '%s', '%s', '%s seconds'::pg_catalog.interval ) AS n " +
+                "), raw_values AS ( " +
+                    "SELECT " +
+                        "time AS step, " +
+                        "value AS raw_value " +
+                    "FROM " +
+                        "pgtimeseries_time_series " +
+                    "WHERE " +
+                        "key = ? AND " +
+                        "time > '%s' AND " +
+                        "time < '%s' " +
+                    "ORDER BY " +
+                        "step ASC " +
+                ") " +
+                "SELECT " +
+                    "f.start_time AS step, " +
+                    "COALESCE( " +
+                        "%s( raw_value ), " +
+                        "'NaN' " +
+                    ") as aggregation " +
+                "FROM " +
+                    "raw_values AS r " +
+                    "RIGHT JOIN intervals AS f ON r.step >= f.start_time AND " +
+                    "r.step < f.end_time " +
+                "GROUP BY " +
+                    "f.start_time, " +
+                    "f.end_time " +
+                "ORDER BY " +
+                    "f.start_time", stepInSeconds, start, end, stepInSeconds, start, end, toSql(request.getAggregation()));
                 }
             }
             PreparedStatement statement = connection.prepareStatement(sql);
@@ -287,10 +376,6 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             ResultSet rs = statement.executeQuery();
             db.watch(rs);
             samples = new ArrayList<>();
-            if (Metric.Mtype.count.name().equals(type) || Metric.Mtype.counter.name().equals(type)) {
-                rs.next();
-                log.debug("Counter: skipping first result as it is always null: '{}'", rs.getDouble("aggregation"));
-            }
             while (rs.next()) {
                 long timestamp = rs.getTimestamp("step").getTime();
                 samples.add(ImmutableSample.builder().metric(metric).time(Instant.ofEpochMilli(timestamp)).value(rs.getDouble("aggregation")).build());

@@ -14,22 +14,23 @@ It can be used in OpenNMS to store and retrieve timeseries data.
 
 
 ## Usage
-### Grant the 'opennms' role superuser on the opennms database
-* `sudo su - postgres -c "alter role opennms superuser"`
-* This is currently required for the plugin to install extensions and create the required tables. This can be removed later.
-### enable the Time Series Storage layer
-* In opennms deploy root folder: ``echo "org.opennms.timeseries.strategy=integration" >> etc/opennms.properties.d/timescale.properties``
 ### Compile from source
 * compile: ``mvn install``
 * copy the `opennms-plugins-timeseries-pgtimeseries-plugin.kar` from the `./assembly/kar/target` folder to `$OPENNMS_HOME/deploy`
+### Grant the 'opennms' role superuser on the opennms database
+* `sudo su - postgres -c "alter role opennms superuser"`
+* This is currently required for the plugin to install extensions and create the required tables. This can be removed later.
 ### Add config for `pg_cron`
 * `echo "cron.database_name = 'opennms' >> /var/lib/pgsql/data/postgresql.conf`
 * `echo "shared_preload_libraries = 'pg_cron'" >> /var/lib/pgsql/data/postgresql.conf`
+* Restart postgresql
+### enable the Time Series Storage layer
+* In the `${OPENMS_HOME}` directory: ``echo "org.opennms.timeseries.strategy=integration" >> etc/opennms.properties.d/timeseries.properties``
 ###
 ### Activate in the Karaf shell:
   * ``ssh -p 8101 admin@localhost``
   * ``feature:install opennms-plugins-pgtimeseries-plugin``
-  * The plugin will automatically create the necessary tables if they don't already exist.
+  * The plugin will automatically create the necessary tables and attempt to install the necessary extensions if they don't already exist.
 
 ## Links:
 * Introduction to the Time Series Storage Layer: https://docs.opennms.com/horizon/latest/operation/operation/timeseries/introduction.html
@@ -39,5 +40,5 @@ It can be used in OpenNMS to store and retrieve timeseries data.
 * Make the datasources configurable to allow timeseries to be persisted to an external database
 * Use the `opennms-admin` datasource to install the extensions and create the tables if possible
 * Make all other options configurable at install (retention, compression, partition interval, etc) and at runtime via Karaf shell commands where possible
-* Add Karaf shell commands to expose [ts_table_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_table_info) and [ts_part_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_part_info)
+* (Done) Add Karaf shell commands to expose [ts_table_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_table_info) and [ts_part_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_part_info)
 * More as I think of it
