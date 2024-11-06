@@ -1,6 +1,5 @@
 package org.opennms.timeseries.impl.pgtimeseries.config;
 
-import java.util.Objects;
 import java.util.StringJoiner;
 
 public class PGTimeseriesConfig {
@@ -12,6 +11,8 @@ public class PGTimeseriesConfig {
     private final String compressionPolicy;
     private final String backfillStart;
     private final boolean createTablesOnInstall;
+    private final int maxBatchSize;
+    private final int connectionPoolSize;
 
     public PGTimeseriesConfig() {
         this(builder());
@@ -25,6 +26,8 @@ public class PGTimeseriesConfig {
         this.compressionPolicy = builder.compressionPolicy;
         this.backfillStart = builder.backfillStart;
         this.createTablesOnInstall = builder.createTablesOnInstall;
+        this.maxBatchSize = builder.maxBatchSize;
+        this.connectionPoolSize = builder.connectionPoolSize;
     }
 
     /** Will be called via blueprint. The builder can be called when not running as Osgi plugin. */
@@ -35,7 +38,9 @@ public class PGTimeseriesConfig {
             final String retentionPolicy,
             final String compressionPolicy,
             final String backfillStart,
-            final boolean createTablesOnInstall) {
+            final boolean createTablesOnInstall,
+            final int maxBatchSize,
+            final int connectionPoolSize) {
         this(builder()
                 .externalDatasourceURL(externalDatasourceURL)
                 .adminDatasourceURL(adminDatasourceURL)
@@ -43,7 +48,9 @@ public class PGTimeseriesConfig {
                 .retentionPolicy(retentionPolicy)
                 .compressionPolicy(compressionPolicy)
                 .backfillStart(backfillStart)
-                .createTablesOnInstall(createTablesOnInstall));
+                .createTablesOnInstall(createTablesOnInstall)
+                .maxBatchSize(maxBatchSize)
+                .connectionPoolSize(connectionPoolSize));
     }
 
     public String getExternalDatasourceURL() {
@@ -70,8 +77,16 @@ public class PGTimeseriesConfig {
         return backfillStart;
     }
 
-    public boolean createTablesOnInstall() {
+    public boolean getCreateTablesOnInstall() {
         return createTablesOnInstall;
+    }
+
+    public int getMaxBatchSize() {
+        return maxBatchSize;
+    }
+
+    public int getConnectionPoolSize() {
+        return connectionPoolSize;
     }
 
     public static Builder builder() {
@@ -79,13 +94,15 @@ public class PGTimeseriesConfig {
     }
 
     public final static class Builder {
-        private String externalDatasourceURL = "jdbc:postgresql://localhost:5432/opennms?user=opennms&password=opennms";
-        private String adminDatasourceURL = "jdbc:postgresql://localhost:5432/opennms?user=postgres&password=opennms";
+        private String externalDatasourceURL = "";
+        private String adminDatasourceURL = "";
         private String partitionDuration = "1 week";
         private String retentionPolicy = "1 year";
         private String compressionPolicy = "3 months";
         private String backfillStart = null;
         private boolean createTablesOnInstall = true;
+        private int maxBatchSize = 100;
+        private int connectionPoolSize = 100;
 
         public Builder externalDatasourceURL(final String externalDatasourceURL) {
             this.externalDatasourceURL = externalDatasourceURL;
@@ -122,6 +139,16 @@ public class PGTimeseriesConfig {
             return this;
         }
 
+        public Builder maxBatchSize(final int maxBatchSize) {
+            this.maxBatchSize = maxBatchSize;
+            return this;
+        }
+
+        public Builder connectionPoolSize(final int connectionPoolSize) {
+            this.connectionPoolSize = connectionPoolSize;
+            return this;
+        }
+
         public PGTimeseriesConfig build() {
             return new PGTimeseriesConfig(this);
         }
@@ -136,7 +163,9 @@ public class PGTimeseriesConfig {
                 .add("retentionPolicy='" + retentionPolicy + "'")
                 .add("compressionPolicy='" + compressionPolicy + "'")
                 .add("backfillStart='" + backfillStart + "'")
-                .add("createTablesOnInstall='" + createTablesOnInstall + "'")
+                .add("createTablesOnInstall=" + createTablesOnInstall)
+                .add("maxBatchSize='" + maxBatchSize + "'")
+                .add("connectionPoolSize='" + connectionPoolSize + "'" )
                 .toString();
     }
 }

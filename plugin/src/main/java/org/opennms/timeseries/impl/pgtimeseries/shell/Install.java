@@ -4,11 +4,11 @@ import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.opennms.timeseries.impl.pgtimeseries.config.PGTimeseriesConfig;
 import org.opennms.timeseries.impl.pgtimeseries.util.PGTimeseriesDatabaseInitializer;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
-
 
 @Command(scope = "opennms-pgtimeseries", name = "install", description = "Create database infrastructure for the pg_timeseries plugin if it does not exist.")
 @Service

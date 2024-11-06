@@ -12,6 +12,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.opennms.timeseries.impl.pgtimeseries.config.PGTimeseriesConfig;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -54,21 +55,21 @@ public class DatabaseInitializerTest {
 
     @Before
     public void setUp() {
-        this.initializer = new PGTimeseriesDatabaseInitializer(createDatasource());
+        this.initializer = new PGTimeseriesDatabaseInitializer(createDatasource(), PGTimeseriesConfig.builder().build());
     }
 
     @Test
     public void shouldCreateTables() throws SQLException {
         assertTrue(initializer.isPGTimeseriesExtensionInstalled());
 
-        assertFalse(initializer.isPGTimeseriesTableExisting(TableNames.PGTIMESERIES_TIME_SERIES));
-        assertFalse(initializer.isPGTimeseriesTableExisting(TableNames.PGTIMESERIES_METRIC));
-        assertFalse(initializer.isPGTimeseriesTableExisting(TableNames.PGTIMESERIES_TAG));
+        assertFalse(initializer.doesPGTimeseriesTableExist(TableNames.PGTIMESERIES_TIME_SERIES));
+        assertFalse(initializer.doesPGTimeseriesTableExist(TableNames.PGTIMESERIES_METRIC));
+        assertFalse(initializer.doesPGTimeseriesTableExist(TableNames.PGTIMESERIES_TAG));
 
         initializer.createTables();
 
-        assertTrue(initializer.isPGTimeseriesTableExisting(TableNames.PGTIMESERIES_TIME_SERIES));
-        assertTrue(initializer.isPGTimeseriesTableExisting(TableNames.PGTIMESERIES_METRIC));
-        assertTrue(initializer.isPGTimeseriesTableExisting(TableNames.PGTIMESERIES_TAG));
+        assertTrue(initializer.doesPGTimeseriesTableExist(TableNames.PGTIMESERIES_TIME_SERIES));
+        assertTrue(initializer.doesPGTimeseriesTableExist(TableNames.PGTIMESERIES_METRIC));
+        assertTrue(initializer.doesPGTimeseriesTableExist(TableNames.PGTIMESERIES_TAG));
     }
 }

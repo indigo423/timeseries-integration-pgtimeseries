@@ -10,11 +10,39 @@
 		http://aries.apache.org/schemas/blueprint-ext/blueprint-ext-1.1.xsd
 ">
 
+        <!-- Configuration properties -->
+    <cm:property-placeholder id="pgtsPluginProperties" persistent-id="org.opennms.plugins.pgtimeseries.config" update-strategy="reload">
+        <cm:default-properties>
+            <cm:property name="externalDatasourceURL" value="" />
+            <cm:property name="adminDatasourceURL" value="" />
+            <cm:property name="partitionDuration" value="1 week" />
+            <cm:property name="retentionPolicy" value="1 year" />
+            <cm:property name="compressionPolicy" value="3 months" />
+            <cm:property name="backfillStart" value="" />
+            <cm:property name="createTablesOnInstall" value = "true" />
+            <cm:property name="maxBatchSize" value = "100" />
+            <cm:property name="connectionPoolSize" value = "10" />
+        </cm:default-properties>
+    </cm:property-placeholder>
+
+    <bean id="PGTimeseriesConfig" class="org.opennms.timeseries.impl.pgtimeseries.config.PGTimeseriesConfig">
+        <argument value="${externalDatasourceURL}" />
+        <argument value="${adminDatasourceURL}" />
+        <argument value="${partitionDuration}" />
+        <argument value="${retentionPolicy}" />
+        <argument value="${compressionPolicy}" />
+        <argument value="${backfillStart}" />
+        <argument value="${createTablesOnInstall}" />
+        <argument value="${maxBatchSize}" />
+        <argument value="${connectionPoolSize}" />
+    </bean>
+
     <reference id="dataSource" interface="javax.sql.DataSource" availability="mandatory" />
     <bean id="timeSeriesStorage"
           class="org.opennms.timeseries.impl.pgtimeseries.PGTimeseriesStorage"
           init-method="init">
         <argument ref="dataSource" />
+        <argument ref="PGTimeseriesConfig" />
     </bean>
     <service ref="timeSeriesStorage" interface="org.opennms.timeseries.impl.pgtimeseries.PGTimeseriesStorage"/>
     <service ref="timeSeriesStorage" interface="org.opennms.integration.api.v1.timeseries.TimeSeriesStorage">

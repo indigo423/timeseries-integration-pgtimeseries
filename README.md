@@ -1,4 +1,4 @@
-# Timeseries Integration pg_timeseries Plugin 
+# Timeseries Integration pg_timeseries Plugin
 
 This plugin exposes an implementation of the TimeSeriesStorage interface.
 It stores the data in a pg_timeseries table.
@@ -17,28 +17,52 @@ It can be used in OpenNMS to store and retrieve timeseries data.
 ### Compile from source
 * compile: ``mvn install``
 * copy the `opennms-plugins-timeseries-pgtimeseries-plugin.kar` from the `./assembly/kar/target` folder to `$OPENNMS_HOME/deploy`
-### Grant the 'opennms' role superuser on the opennms database
+### Allow for superuser database operations
+Superuser access to the database is required for the plugin to install extensions and create the required tables. Either option can be used and can be removed once initial installation is complete.
+##### Add the 'superuser' role to the 'opennms' user:
 * `sudo su - postgres -c "alter role opennms superuser"`
-* This is currently required for the plugin to install extensions and create the required tables. This can be removed later.
+##### Or; Define a JDBC url for a superuser connection:
+* `echo 'adminDatasourceURL="jdbc:postgresql://localhost:5432/opennms?user=postgres&password=opennms"' >> $OPENNMS_HOME/etc/org.opennms.plugins.pgtimeseries.config.cfg`
+
 ### Add config for `pg_cron`
 * `echo "cron.database_name = 'opennms' >> /var/lib/pgsql/data/postgresql.conf`
 * `echo "shared_preload_libraries = 'pg_cron'" >> /var/lib/pgsql/data/postgresql.conf`
 * Restart postgresql
 ### enable the Time Series Storage layer
 * In the `${OPENMS_HOME}` directory: ``echo "org.opennms.timeseries.strategy=integration" >> etc/opennms.properties.d/timeseries.properties``
-###
+
 ### Activate in the Karaf shell:
   * ``ssh -p 8101 admin@localhost``
   * ``feature:install opennms-plugins-pgtimeseries-plugin``
-  * The plugin will automatically create the necessary tables and attempt to install the necessary extensions if they don't already exist.
+  * The plugin will automatically create the necessary tables and attempt to install the necessary extensions if they don't already exist, if ``createTablesOnInstall = true``
+  * if ``createTablesOnInstall = false`` you can use the ``opennms-pgtimeseries:install`` command to load the extensions and create tables.
+ 
+### Configuration properties and default values
+ * Config file can be created as ``$OPENNMS_HOME/etc/org.opennms.plugins.pgtimeseries.config.cfg``
+ * Honored properties are:
+   *  **``externalDatasourceURL``**: a PostgreSQL JDBC URL, including username and password, that describes an external database that will be used to store timeseries metrics. Default: ``""``
+   *  **``adminDatasourceURL``**: a PostgreSQL JDBC URL, including username and password, that describes a connection which has superuser access to the database.  This is used to install the required extensions and create the required tables.  This is only used for initial install and can be removed once the plugin has been configured. Default: ``""``
+   *  **``partitionDuration``**: An SQL _Interval_ as described in the [PostgreSQL Docs](https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT) to set the time width of a single partition of the timeseries metric table. Default: ``"1 week"``
+   *  **``retentionPolicy``**: An SQL _Interval_ as described in the [PostgreSQL Docs](https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT) to set the total duration of metric retention.  Metric partitions older than this are deleted. Default: ``"1 year"``
+   *  **``compressionPolicy``**: An SQL _Interval_ as described in the [PostgreSQL Docs](https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT) tehe defines the point after which partitions are automatically compressed to reduce storage consumption. Default: ``"3 months"``
+   *  **``backfillStart``**: A ``timestamptz`` as described in the [PostgreSQL Docs](https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-DATETIME) used to determine the start of the table's first partition. When backfilling historical data, this is when the data starts. **NB: there is currently no mechanism to backfill metric data.**  Default: ``null``.
+   *  **``createTablesOnInstall``**: The timeseries plugin will attempt to install the extension and create its tables on install if this is true.  If this is false, it will skip these steps and installation can be performed with the ``opennms-pgtimeseries:install`` Karaf shell command.
+   *  **``maxBatchSize``**: Metrics are batched out to PostgreSQL; this is the largest number of metrics that will be written in as a single batch.  Default: `100`.
+   *  **``connectionPoolSize``**: If ``externalDatasourceURL`` is defined, a connection pool is created for this data source. This limits the total number of pooled connections to the target PostgreSQL database.  Default: ``10``
+ 
+### Karaf shell commands
+ * ``opennms-pgtimeseries:stats``: Shows sample read, write, and lost metrics for the plugin.
+ * ``opennms-pgtimeseries:show-table-info``: Displays timeseries table and index size information.
+ * ``opennms-pgtimeseries:show-partition-info``: Displays partition information for the timeseries table.
+ * ``opennms-pgtimeseries:show-ts-config``: Shows the Partition Duration, Partition Lead Time, Retention, and Compression settings for the timeseries table.
+ * ``opennms-pgtimeseries:install``: Checks for the existence of the required timeseries extensions and tables and creates them if they do not exist.
 
 ## Links:
 * Introduction to the Time Series Storage Layer: https://docs.opennms.com/horizon/latest/operation/operation/timeseries/introduction.html
 * pg_timeseries: https://github.com/tembo-io/pg_timeseries
 
 ## Roadmap / To do:
-* Make the datasources configurable to allow timeseries to be persisted to an external database
-* Use the `opennms-admin` datasource to install the extensions and create the tables if possible
-* Make all other options configurable at install (retention, compression, partition interval, etc) and at runtime via Karaf shell commands where possible
+* (Done) Make the datasources configurable to allow timeseries to be persisted to an external database
+* (Done) Use the `opennms-admin` datasource to install the extensions and create the tables if possible
+* (Done) Make all other options configurable at install (retention, compression, partition interval, etc) and at runtime via Karaf shell commands where possible
 * (Done) Add Karaf shell commands to expose [ts_table_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_table_info) and [ts_part_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_part_info)
-* More as I think of it

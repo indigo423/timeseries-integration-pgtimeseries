@@ -30,6 +30,7 @@ import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableTag;
+import org.opennms.timeseries.impl.pgtimeseries.config.PGTimeseriesConfig;
 import org.opennms.timeseries.impl.pgtimeseries.util.DBUtils;
 import org.opennms.timeseries.impl.pgtimeseries.util.PGTimeseriesDatabaseInitializer;
 import org.slf4j.Logger;
@@ -48,11 +49,8 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
 
     private static final Logger RATE_LIMITED_LOGGER = log;
 
-    //TODO - make this configurable
     private final DataSource dataSource;
-
-    //TODO - make this configurable
-    private int maxBatchSize = 100;
+    private final PGTimeseriesConfig config;
 
     private final MetricRegistry metrics = new MetricRegistry();
     private final Meter samplesWritten = metrics.meter("samplesWritten");
@@ -60,29 +58,39 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
     private final Meter samplesLost = metrics.meter("samplesLost");
     final JmxReporter reporter = JmxReporter.forRegistry(metrics).inDomain("org.opennms.timeseries.impl.pgtimeseries").build();
 
+    public PGTimeseriesStorage(final PGTimeseriesConfig config, final DataSource dataSource) {
+        this.config = Objects.requireNonNull(config);
+        this.dataSource = Objects.requireNonNull(dataSource);
+    }
+    
     @Override
     public void store(List<Sample> entries) throws StorageException {
         String sql = "INSERT INTO pgtimeseries_time_series(time, key, value)  values (?, ?, ?)";
 
         final DBUtils db = new DBUtils(this.getClass());
-        Integer batchSize = 0;
+        int batchSize = 0;
+        Connection connection = null;
         try {
-            Connection connection = this.dataSource.getConnection();
+            if (PGTimeseriesDatabaseInitializer.isExternalDatasourceURLAvailable()) {
+                connection = PGTimeseriesDatabaseInitializer.getWhichDataSourceConnection();
+                log.trace("Store got connection: " + connection.toString());
+            } else {
+                connection = this.dataSource.getConnection();
+            }
             db.watch(connection);
             PreparedStatement ps = connection.prepareStatement(sql);
             db.watch(ps);
-
             // Partition the samples into collections smaller then max_batch_size
-            for (List<Sample> batch : Lists.partition(entries, maxBatchSize)) {
+            for (List<Sample> batch : Lists.partition(entries, config.getMaxBatchSize())) {
                 log.debug("Inserting {} samples", batch.size());
                 for (Sample sample : batch) {
                     ps.setTimestamp(1, new Timestamp(sample.getTime().toEpochMilli()));
                     ps.setString(2, sample.getMetric().getKey());
                     ps.setDouble(3, sample.getValue());
                     ps.addBatch();
-                    storeTags(sample.getMetric(), ImmutableMetric.TagType.intrinsic, sample.getMetric().getIntrinsicTags());
-                    storeTags(sample.getMetric(), ImmutableMetric.TagType.meta, sample.getMetric().getMetaTags());
-                    storeTags(sample.getMetric(), ImmutableMetric.TagType.external, sample.getMetric().getExternalTags());
+                    storeTags(connection, sample.getMetric(), ImmutableMetric.TagType.intrinsic, sample.getMetric().getIntrinsicTags());
+                    storeTags(connection, sample.getMetric(), ImmutableMetric.TagType.meta, sample.getMetric().getMetaTags());
+                    storeTags(connection, sample.getMetric(), ImmutableMetric.TagType.external, sample.getMetric().getExternalTags());
                 }
                 batchSize = batch.size();
                 ps.executeBatch();
@@ -105,13 +113,10 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
         }
     }
 
-    private void storeTags(final Metric metric, final ImmutableMetric.TagType tagType, final Collection<Tag> tags) throws SQLException {
+    private void storeTags(final Connection connection, final Metric metric, final ImmutableMetric.TagType tagType, final Collection<Tag> tags) throws SQLException {
         final String sql = "INSERT INTO pgtimeseries_tag(fk_pgtimeseries_metric, key, value, type)  values (?, ?, ?, ?) ON CONFLICT (fk_pgtimeseries_metric, key, value, type) DO NOTHING;";
-
         final DBUtils db = new DBUtils(this.getClass());
         try {
-            Connection connection = this.dataSource.getConnection();
-            db.watch(connection);
             PreparedStatement ps = connection.prepareStatement(sql);
             db.watch(ps);
             for (Tag tag : tags) {
@@ -136,10 +141,17 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
         }
 
         final DBUtils db = new DBUtils(this.getClass());
+        Connection connection = null;
         try {
 
             String sql = createMetricsSQL(matchers);
-            Connection connection = this.dataSource.getConnection();
+            if (PGTimeseriesDatabaseInitializer.isExternalDatasourceURLAvailable()) {
+                connection = PGTimeseriesDatabaseInitializer.getWhichDataSourceConnection();
+                log.trace("FindMetrics got connection: " + connection.toString());
+            }
+            else {
+                connection = this.dataSource.getConnection();
+            }
             db.watch(connection);
 
             // Get all relevant metricKeys
@@ -239,8 +251,15 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
 
         DBUtils db = new DBUtils();
         ArrayList<Sample> samples;
+        Connection connection = null;
         try {
-            final Connection connection = this.dataSource.getConnection();
+            if (PGTimeseriesDatabaseInitializer.isExternalDatasourceURLAvailable()) {
+                connection = PGTimeseriesDatabaseInitializer.getWhichDataSourceConnection();
+                log.trace("getTimeseries got connection: " + connection.toString());
+            }
+            else {
+                connection = this.dataSource.getConnection();
+            }
             db.watch(connection);
             long stepInSeconds = request.getStep().getSeconds();
             List<Metric> metrics = loadMetrics(connection, db, Collections.singletonList(request.getMetric().getKey()));
@@ -278,8 +297,6 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
                     "key = ? AND " +
                     "time > '%s' AND " +
                     "time < '%s' " +
-                "ORDER BY " +
-                    "step ASC " +
             ") " +
             "SELECT " +
                 "f.start_time AS step, " +
@@ -314,8 +331,6 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
                         "key = ? AND " +
                         "time > '%s' AND " +
                         "time < '%s' " +
-                    "ORDER BY " +
-                        "step ASC " +
                 ") " +
                 "SELECT " +
                     "f.start_time AS step, " +
@@ -349,8 +364,6 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
                         "key = ? AND " +
                         "time > '%s' AND " +
                         "time < '%s' " +
-                    "ORDER BY " +
-                        "step ASC " +
                 ") " +
                 "SELECT " +
                     "f.start_time AS step, " +
@@ -385,6 +398,13 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             log.error("Could not retrieve FetchResults", e);
             throw new StorageException(e);
         } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             db.cleanUp();
         }
         return samples;
@@ -394,8 +414,15 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
     public void delete(final Metric metric) throws StorageException {
 
         DBUtils db = new DBUtils(this.getClass());
+        Connection connection = null;
         try {
-            Connection connection = this.dataSource.getConnection();
+            if (PGTimeseriesDatabaseInitializer.isExternalDatasourceURLAvailable()) {
+                connection = PGTimeseriesDatabaseInitializer.getWhichDataSourceConnection();
+                log.trace("Delete got connection: " + connection.toString());
+            }
+            else {
+                connection = this.dataSource.getConnection();
+            }
             db.watch(connection);
 
             PreparedStatement statement = connection.prepareStatement("DELETE FROM pgtimeseries_time_series where key=?");
@@ -437,7 +464,7 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
 
     public void init() throws StorageException {
         try {
-            new PGTimeseriesDatabaseInitializer(this.dataSource)
+            new PGTimeseriesDatabaseInitializer(this.dataSource, this.config)
                     .initializeIfNeeded();
         } catch (final SQLException e) {
             throw new StorageException(e);
@@ -447,6 +474,7 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
 
     public void destroy() {
         reporter.stop();
+        PGTimeseriesDatabaseInitializer.ExtReporter.stop(); // janky
     }
 
     public MetricRegistry getMetrics() {

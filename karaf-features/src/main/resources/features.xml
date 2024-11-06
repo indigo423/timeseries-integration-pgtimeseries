@@ -6,6 +6,7 @@
         <feature dependency="true">shell</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
         <feature version="${guava.version}" dependency="true">guava</feature>
+        <feature version="${hikari-cp.version}" dependency="true">hikari-cp</feature>
         <bundle>mvn:org.opennms.plugins.timeseries.pgtimeseries/timeseries-pgtimeseries-plugin-plugin/${project.version}</bundle>
         <capability>
             osgi.service;effective:=active;objectClass=javax.sql.DataSource;osgi.jndi.service.name=jdbc/manifestlegacydb
@@ -15,6 +16,10 @@
     <feature name="guava" description="guava" version="${guava.version}">
         <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
         <bundle dependency="true">mvn:com.google.guava/failureaccess/1.0.1</bundle>
+    </feature>
+    <feature name="hikari-cp" version="${hikari-cp.version}" description="HikariCP">
+        <feature>postgresql</feature>
+        <bundle>mvn:com.zaxxer/HikariCP/${hikari-cp.version}</bundle>
     </feature>
 
 </features>

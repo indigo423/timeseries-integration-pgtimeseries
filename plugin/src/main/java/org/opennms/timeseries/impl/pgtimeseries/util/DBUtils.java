@@ -61,6 +61,8 @@ public class DBUtils {
             resultSets.add((ResultSet)o);
         } else if (o instanceof Connection) {
             connections.add((Connection)o);
+        } else {
+            LOG.debug("Unknown object {}", o.toString());
         }
         return this;
     }
@@ -91,6 +93,7 @@ public class DBUtils {
         for (Connection c : connections) {
             if (c != null) {
                 try {
+                    LOG.trace("Closing connection: " + c.toString());
                     c.close();
                 } catch (Throwable e) {
                     LOG.warn("Unable to close connection", e);

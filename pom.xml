@@ -23,6 +23,7 @@
         <slf4j-api.version>1.7.36</slf4j-api.version>
 	    <istack.commons.version>4.2.0</istack.commons.version>
         <metrics.version>4.2.25</metrics.version>
+        <hikari-cp.version>3.4.5</hikari-cp.version>
     </properties>
 
     <version>0.1.0</version>
@@ -123,12 +124,7 @@
                 <version>1.14.3</version>
                 <scope>test</scope>
             </dependency>
-            <dependency>
-                <groupId>com.zaxxer</groupId>
-                <artifactId>HikariCP</artifactId>
-                <version>3.4.5</version>
-                <scope>test</scope>
-            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

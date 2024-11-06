@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.opennms.integration.api.v1.timeseries.AbstractStorageIntegrationTest;
 import org.opennms.integration.api.v1.timeseries.TimeSeriesStorage;
+import org.opennms.timeseries.impl.pgtimeseries.config.PGTimeseriesConfig;
 import org.opennms.timeseries.impl.pgtimeseries.util.DBUtils;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
@@ -59,7 +60,7 @@ public class PGTimeseriesStorageTest extends AbstractStorageIntegrationTest {
     @Before
     public void setUp() throws Exception {
         dataSource = createDatasource();
-        pgtimeseries = new PGTimeseriesStorage(dataSource);
+        pgtimeseries = new PGTimeseriesStorage(PGTimeseriesConfig.builder().build(), dataSource);
         pgtimeseries.init();
         super.setUp();
     }
