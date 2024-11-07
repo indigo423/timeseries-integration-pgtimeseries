@@ -1,0 +1,27 @@
+---
+name: Build Postgre Time Series Storage Plugin
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged --shm-size=2g
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+    container:
+      image: quay.io/bluebird/java-builder:0.1.0.jdk-11.b35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add workspace to git safe.directory
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Compile source with unit and integration tests
+        run: |
+          make compile
+      - name: Run Unit and Integration tests
+        run: |
+          make tests
