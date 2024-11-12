@@ -5,9 +5,11 @@ It stores the data in a pg_timeseries table.
 It can be used in OpenNMS to store and retrieve timeseries data.
 
 ## Prerequisite
+* PostgreSQL 15 or greater
 * The pg_timeseries plugin must be installed in the target postgres database.
 * For testing purposes you can run: ``docker run -d --name pg-timeseries -p 5432:5432 -e POSTGRES_PASSWORD=postgres quay.io/tembo/timeseries-pg:latest``
 * The pg_timeseries extension depends on:
+  * The [pg_ivm](https://github.com/tembo-io/pg_ivm) extension (as of timeseries 0.1.6)
   * The [pg_cron](https://github.com/citusdata/pg_cron) extension
   * The [pg_partman](https://github.com/pgpartman/pg_partman) extension
   * The [Hydra Columnar](https://github.com/hydradatabase/hydra) extension
@@ -15,12 +17,12 @@ It can be used in OpenNMS to store and retrieve timeseries data.
 
 ## Usage
 ### Compile from source
-* compile: ``mvn install``
+* compile: ``mvn install``.  You will probably have to add `-Dskiptests=True`; actual tests are on the roadmap.
 * copy the `opennms-plugins-timeseries-pgtimeseries-plugin.kar` from the `./assembly/kar/target` folder to `$OPENNMS_HOME/deploy`
 ### Allow for superuser database operations
 Superuser access to the database is required for the plugin to install extensions and create the required tables. Either option can be used and can be removed once initial installation is complete.
 ##### Add the 'superuser' role to the 'opennms' user:
-* `sudo su - postgres -c "alter role opennms superuser"`
+* `sudo su - postgres -c "alter role opennms superuser;"`
 ##### Or; Define a JDBC url for a superuser connection:
 * `echo 'adminDatasourceURL="jdbc:postgresql://localhost:5432/opennms?user=postgres&password=opennms"' >> $OPENNMS_HOME/etc/org.opennms.plugins.pgtimeseries.config.cfg`
 
@@ -33,7 +35,7 @@ Superuser access to the database is required for the plugin to install extension
 
 ### Activate in the Karaf shell:
   * ``ssh -p 8101 admin@localhost``
-  * ``feature:install opennms-plugins-pgtimeseries-plugin``
+  * ``feature:install opennms-plugins-timeseries-pgtimeseries-plugin``
   * The plugin will automatically create the necessary tables and attempt to install the necessary extensions if they don't already exist, if ``createTablesOnInstall = true``
   * if ``createTablesOnInstall = false`` you can use the ``opennms-pgtimeseries:install`` command to load the extensions and create tables.
  
@@ -66,3 +68,6 @@ Superuser access to the database is required for the plugin to install extension
 * (Done) Use the `opennms-admin` datasource to install the extensions and create the tables if possible
 * (Done) Make all other options configurable at install (retention, compression, partition interval, etc) and at runtime via Karaf shell commands where possible
 * (Done) Add Karaf shell commands to expose [ts_table_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_table_info) and [ts_part_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_part_info)
+* (Done) Rename `show-ts-config` to `ts-config` and add options to allow the retention and compression intervals to be set on the fly. (pgtimeseries doesn't support changing the partition interval yet)
+* It probably needs more tests.  I don't know how to write tests. PRs welcome.
+* Make something that can backfill the database from existing rrd or jrb

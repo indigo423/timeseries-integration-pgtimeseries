@@ -154,6 +154,7 @@ public class PGTimeseriesDatabaseInitializer {
             executeQuery(stmt, "CREATE TABLE IF NOT EXISTS pgtimeseries_tag(fk_pgtimeseries_metric TEXT NOT NULL, key TEXT, value TEXT NOT NULL, type TEXT NOT NULL, UNIQUE (fk_pgtimeseries_metric, key, value, type))");
             // let pg_timseries take over the table; default partition for 1 week duration
             if (config.getbackfillStart() != null && !config.getbackfillStart().isEmpty()) {
+                log.info("Using backfillStart timestamp {}", config.getbackfillStart());
                 sql = "SELECT enable_ts_table('pgtimeseries_time_series', partition_duration := cast(? as interval), initial_table_start := cast(? as timestamptz))";
                 statement = conn.prepareStatement(sql);
                 db.watch(statement);
