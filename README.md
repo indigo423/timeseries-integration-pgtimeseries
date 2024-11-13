@@ -56,7 +56,7 @@ Superuser access to the database is required for the plugin to install extension
  * ``opennms-pgtimeseries:stats``: Shows sample read, write, and lost metrics for the plugin.
  * ``opennms-pgtimeseries:show-table-info``: Displays timeseries table and index size information.
  * ``opennms-pgtimeseries:show-partition-info``: Displays partition information for the timeseries table.
- * ``opennms-pgtimeseries:show-ts-config``: Shows the Partition Duration, Partition Lead Time, Retention, and Compression settings for the timeseries table.
+ * ``opennms-pgtimeseries:ts-config``: Allows changing retention and compression interval. With no arguments, it displays the Partition Duration, Partition Lead Time, Retention, and Compression settings for the timeseries table.
  * ``opennms-pgtimeseries:install``: Checks for the existence of the required timeseries extensions and tables and creates them if they do not exist.
 
 ## Links:
@@ -71,3 +71,4 @@ Superuser access to the database is required for the plugin to install extension
 * (Done) Rename `show-ts-config` to `ts-config` and add options to allow the retention and compression intervals to be set on the fly. (pgtimeseries doesn't support changing the partition interval yet)
 * It probably needs more tests.  I don't know how to write tests. PRs welcome.
 * Make something that can backfill the database from existing rrd or jrb
+* Figure out how to use the external data source everywhere the regular datasource is used.
