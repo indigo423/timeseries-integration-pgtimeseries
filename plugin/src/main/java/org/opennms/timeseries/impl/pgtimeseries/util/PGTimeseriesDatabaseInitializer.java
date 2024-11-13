@@ -135,7 +135,9 @@ public class PGTimeseriesDatabaseInitializer {
         String sql;
         PreparedStatement statement;
         try {
-            Connection conn;
+            Connection conn = getWhichDataSourceConnection();
+            /*
+            Need to create the tables as the regular user so the ownership is correct...
             if (isAdminDatasourceURLAvailable()) {
                 log.info("Using admin datasource to create tables: " + hikariAdmDs.toString());
                 conn = hikariAdmDs.getConnection();
@@ -143,6 +145,7 @@ public class PGTimeseriesDatabaseInitializer {
             else {
                 conn = getWhichDataSourceConnection();
             }
+            */
             db.watch(conn);
             Statement stmt = conn.createStatement();
             db.watch(stmt);

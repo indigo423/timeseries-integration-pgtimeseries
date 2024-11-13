@@ -7,6 +7,7 @@ import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.table.ShellTable;
 import org.opennms.timeseries.impl.pgtimeseries.util.DBUtils;
+import org.opennms.timeseries.impl.pgtimeseries.util.PGTimeseriesDatabaseInitializer;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -39,7 +40,7 @@ public class ShowTSConfig implements Action {
             return null;
         }
         try {
-            Connection conn = dataSource.getConnection();
+            Connection conn = PGTimeseriesDatabaseInitializer.getWhichDataSourceConnection();
             db.watch(conn);
             PreparedStatement statement = null;
             // configure retention

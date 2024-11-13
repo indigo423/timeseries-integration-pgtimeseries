@@ -7,6 +7,7 @@ import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.table.ShellTable;
 import org.opennms.timeseries.impl.pgtimeseries.util.DBUtils;
+import org.opennms.timeseries.impl.pgtimeseries.util.PGTimeseriesDatabaseInitializer;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,7 +36,7 @@ public class ShowPartitionInfo implements Action {
         table.column("Total Size");
         table.column("Access Method");
         try {
-            Connection conn = dataSource.getConnection();
+            Connection conn = PGTimeseriesDatabaseInitializer.getWhichDataSourceConnection();
             db.watch(conn);
             sql = "select table_id, part_id, part_range, pg_size_pretty(table_size_bytes), pg_size_pretty(index_size_bytes), pg_size_pretty(total_size_bytes), access_method FROM ts_part_info";
             PreparedStatement statement = conn.prepareStatement(sql);

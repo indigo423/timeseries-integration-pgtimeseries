@@ -11,7 +11,7 @@
 ">
 
         <!-- Configuration properties -->
-    <cm:property-placeholder id="pgtsPluginProperties" persistent-id="org.opennms.plugins.pgtimeseries.config" update-strategy="reload">
+    <cm:property-placeholder id="pgtsPluginProperties" persistent-id="org.opennms.plugins.timeseries.pgtimeseries" update-strategy="reload">
         <cm:default-properties>
             <cm:property name="externalDatasourceURL" value="" />
             <cm:property name="adminDatasourceURL" value="" />

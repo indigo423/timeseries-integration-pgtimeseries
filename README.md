@@ -40,7 +40,7 @@ Superuser access to the database is required for the plugin to install extension
   * if ``createTablesOnInstall = false`` you can use the ``opennms-pgtimeseries:install`` command to load the extensions and create tables.
  
 ### Configuration properties and default values
- * Config file can be created as ``$OPENNMS_HOME/etc/org.opennms.plugins.pgtimeseries.config.cfg``
+ * Config file can be created as ``$OPENNMS_HOME/etc/org.opennms.plugins.timeseries.pgtimeseries.cfg``
  * Honored properties are:
    *  **``externalDatasourceURL``**: a PostgreSQL JDBC URL, including username and password, that describes an external database that will be used to store timeseries metrics. Default: ``""``
    *  **``adminDatasourceURL``**: a PostgreSQL JDBC URL, including username and password, that describes a connection which has superuser access to the database.  This is used to install the required extensions and create the required tables.  This is only used for initial install and can be removed once the plugin has been configured. Default: ``""``
@@ -69,6 +69,7 @@ Superuser access to the database is required for the plugin to install extension
 * (Done) Make all other options configurable at install (retention, compression, partition interval, etc) and at runtime via Karaf shell commands where possible
 * (Done) Add Karaf shell commands to expose [ts_table_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_table_info) and [ts_part_info](https://github.com/tembo-io/pg_timeseries/blob/main/doc/reference.md#ts_part_info)
 * (Done) Rename `show-ts-config` to `ts-config` and add options to allow the retention and compression intervals to be set on the fly. (pgtimeseries doesn't support changing the partition interval yet)
+* (Done) Figure out how to use the external data source everywhere the regular datasource is used.
+* Move connection bits from the initializer to a separate helper class
 * It probably needs more tests.  I don't know how to write tests. PRs welcome.
 * Make something that can backfill the database from existing rrd or jrb
-* Figure out how to use the external data source everywhere the regular datasource is used.

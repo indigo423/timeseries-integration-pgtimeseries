@@ -80,7 +80,7 @@ public class PGTimeseriesStorage implements TimeSeriesStorage {
             db.watch(connection);
             PreparedStatement ps = connection.prepareStatement(sql);
             db.watch(ps);
-            // Partition the samples into collections smaller then max_batch_size
+            // Partition the samples into collections smaller than max_batch_size
             for (List<Sample> batch : Lists.partition(entries, config.getMaxBatchSize())) {
                 log.debug("Inserting {} samples", batch.size());
                 for (Sample sample : batch) {
