@@ -13,7 +13,11 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 
-import org.opennms.integration.api.v1.timeseries.*;
+import org.opennms.integration.api.v1.timeseries.IntrinsicTagNames;
+import org.opennms.integration.api.v1.timeseries.Metric;
+import org.opennms.integration.api.v1.timeseries.Sample;
+import org.opennms.integration.api.v1.timeseries.StorageException;
+import org.opennms.integration.api.v1.timeseries.Tag;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableSample;
 import org.opennms.integration.api.v1.timeseries.immutables.ImmutableMetric;
 import org.opennms.timeseries.impl.pgtimeseries.PGTimeseriesStorage;
